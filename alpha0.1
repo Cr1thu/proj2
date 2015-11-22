@@ -1,0 +1,189 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include <stdbool.h>
+#include <limits.h>
+#include <float.h>
+#include <errno.h>
+
+double taylor_log(double x, unsigned int n)
+{
+    double vys=0, exp=1, z;
+    if (x<=0)
+    {
+        return NAN;
+    }
+    if (x<1)
+    {
+        z = 1 - x;
+        for(unsigned int i=1;i<=n;i++)
+        {
+            vys = vys - ((exp*z)/i);
+            exp = exp*z;
+        }
+    }
+    else
+    {
+        for(unsigned int i=1;i<=n;i++)
+        {
+            vys=vys+(exp*((x-1)/x))/i;
+            exp=exp*((x-1)/x);
+        }
+    }
+    return vys;
+}
+
+double cfrac_log(double x, unsigned int n)
+{
+    double vys=1, z;
+    if (x<=0)
+    {
+        return NAN;
+    }
+    z = (x - 1)/(1 + x);
+    n--;
+    while (n>=1)
+    {
+        vys = ((n*n)*(z*z)) / ((2*n)+1 - vys);
+        n--;
+    }
+    return (2*z)/(1-vys);
+}
+
+unsigned int pocet_iter_taylor (double min, double max, double eps)
+{
+    unsigned int min_iter=1, max_iter=1;
+    while (fabs(log(min)-taylor_log(min,min_iter))>=eps)
+    {
+        min_iter++;
+    }
+    while (fabs(log(max)-taylor_log(max,max_iter))>=eps)
+    {
+        max_iter++;
+    }
+    if (max_iter>=min_iter)
+    {
+        return max_iter;
+    }
+    else
+    {
+        return min_iter;
+    }
+}
+
+unsigned int pocet_iter_cfrac (double min, double max, double eps)
+{
+    unsigned int min_iter=1, max_iter=1;
+    while (fabs(log(min)-cfrac_log(min,min_iter))>=eps)
+    {
+        min_iter++;
+    }
+    while (fabs(log(max)-cfrac_log(max,max_iter))>=eps)
+    {
+        max_iter++;
+    }
+    if (max_iter>=min_iter)
+    {
+        return max_iter;
+    }
+    else
+    {
+        return min_iter;
+    }
+}
+
+bool string_to_double (char *pole, double *cislo)
+{
+    char *string;
+    *cislo = strtod(pole,&string);
+    if (strlen(string)!=0 || (errno==ERANGE))
+    {
+        *cislo = 0;
+        errno=0;
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool string_to_uint (char *pole, unsigned int *cislo)
+{
+    char *string;
+    unsigned long int pcislo;
+    pcislo = strtoul(pole,&string, 10);
+    if (strlen(string)!=0 || (errno==ERANGE))
+    {
+        *cislo = 0;
+        errno=0;
+        return false;
+    }
+    else
+    {
+        *cislo = (unsigned int) pcislo;
+        return true;
+    }
+}
+
+void napoveda()
+{
+    printf("Napoveda");
+}
+
+int main(int argc, char *argv[])
+{
+    double x, max, min, eps;
+    unsigned int n;
+    if ((argc!=5) && (argc!=4))
+    {
+        printf("1");
+        napoveda();
+    }
+    else if ((argc==4) && (!strcmp (argv[1], "--log")))
+    {
+        if (string_to_double(argv[2], &x) && string_to_uint(argv[3], &n))
+        {
+            if (n<=0)
+            {
+                printf ("Spatny vstup");
+            }
+            else
+            {
+               printf ("log(%.5g) = %.12g\n", x, log(x));
+               printf ("cf_log(%.5g) = %.12g\n", x, cfrac_log(x, n));
+               printf ("taylor_log(%.5g) = %.12g\n", x, taylor_log(x, n));
+            }
+        }
+        else
+        {
+            printf ("Spatny vstup\n");
+        }
+    }
+    else if ((argc==5) && (!strcmp (argv[1], "--iter")))
+    {
+        if (string_to_double(argv[2], &min) && string_to_double(argv[3], &max) && string_to_double(argv[4], &eps))
+        {
+            printf ("log(%.5g) = %.12g\n", min, log(min));
+            printf ("log(%.5g) = %.12g\n", max, log(max));
+            printf ("taylor polynomial iterations = %d\n", pocet_iter_taylor(min, max, eps));
+            n=pocet_iter_taylor(min, max, eps);
+            printf ("taylor_log(.5g) = %.12g\n", min, taylor_log(min,n));
+            printf ("taylor_log(%.5g) = %.12g\n", max, taylor_log(max,n));
+            printf ("continued fraction iterations = %d\n", pocet_iter_cfrac(min, max, eps));
+            n=pocet_iter_cfrac(min, max, eps);
+            printf ("cf_log(%.5g) = %.12g\n", min, cfrac_log(min,n));
+            printf ("cf_log(%.5g) = %.12g\n", max, cfrac_log(max,n));
+        }
+        else
+        {
+            printf ("Spatny vstup\n");
+        }
+    }
+    else
+    {
+        napoveda();
+    }
+    return 0;
+}
