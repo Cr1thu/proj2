@@ -1,2 +1,4 @@
-almost done ;)
-jen odladit
+almost done ;);
+jen odladit;
+fabs();
+merlin;
